@@ -1,23 +1,19 @@
 package com.example.v4mapagasolina;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
 import android.Manifest;
-import android.content.ContentValues;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
+import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -26,143 +22,142 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
 
+
+
     private GoogleMap mMap;
-    private LocationManager locationManager;
-    private Location curreLocation;
-    private boolean mapainicio=false;
-    // ConexionSQLiteHelper conn;
+    Location currenLocation;
+    FusedLocationProviderClient fusedLocationProviderClient;
+    private static final int REQUEST_CODE = 101;
+    ConexionSQLiteHelper conn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
+        /* se quito//
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         mapFragment.getMapAsync(this);
-        //conn= new ConexionSQLiteHelper(getApplicationContext(),"bd_estudiantes",null,1);
-      // getLocalizacion();
+       */
+        conn= new ConexionSQLiteHelper(this,"bd_estudiantes",null ,1);
+
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
+        fetchLastLocation();
     }
 
-    private void getLocalizacion() {
-        int permiso = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION);
-        if (permiso == PackageManager.PERMISSION_DENIED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-            } else {
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
-            }
+    private void fetchLastLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,new String[]
+                    {Manifest.permission.ACCESS_FINE_LOCATION},REQUEST_CODE);
+
+
+            return;
         }
+        Task<Location> task = fusedLocationProviderClient.getLastLocation();
+        task.addOnSuccessListener(new OnSuccessListener<Location>() {
+            @Override
+            public void onSuccess(Location location) {
+                if (location!=null){
+                    currenLocation=location;
+                    Toast.makeText(getApplicationContext(),currenLocation.getLatitude()
+                            +""+currenLocation.getLongitude(),Toast.LENGTH_SHORT).show();
+
+                    SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                            .findFragmentById(R.id.map);
+                    mapFragment.getMapAsync(MapsActivity.this);
+
+                }
+            }
+        });
+
+
+
+
+
     }
 
-
-   // @RequiresApi(api = Build.VERSION_CODES.M)
+    /**
+     * Manipulates the map once available.
+     * This callback is triggered when the map is ready to be used.
+     * This is where we can add markers or lines, add listeners or move the camera. In this case,
+     * we just add a marker near Sydney, Australia.
+     * If Google Play services is not installed on the device, the user will be prompted to install
+     * it inside the SupportMapFragment. This method will only be triggered once the user has
+     * installed Google Play services and returned to the app.
+     */
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        LatLng sydney = new LatLng(11, -74.5);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Ubicacion Actual"));
+
+        LatLng latLng=new LatLng(currenLocation.getLatitude(),currenLocation.getLongitude());//ok
 
 
 
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        mMap.setMyLocationEnabled(true);
-        mMap.getUiSettings().setMyLocationButtonEnabled(false);
-
-        LocationManager locationManager = (LocationManager) MapsActivity.this.getSystemService(Context.LOCATION_SERVICE);
-
-        LocationListener locationListener = new LocationListener() {
-
-            @Override
-            public void onLocationChanged(@NonNull Location location) {
-                if(mapainicio==false){
-                    LatLng miUbicacion = new LatLng(location.getLatitude(), location.getLongitude());
-                    mMap.addMarker(new MarkerOptions().position(miUbicacion).title("ubicacion actual"));
-
-                    mMap.moveCamera(CameraUpdateFactory.newLatLng(miUbicacion));
-                    CameraPosition cameraPosition = new CameraPosition.Builder()
-                            .target(miUbicacion)
-                            .zoom(14)
-                            .bearing(90)
-                            .tilt(45)
-                            .build();
-
-                    mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
-                    mapainicio=true;
-                }
-
-               // mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(miUbicacion, 10));
+        MarkerOptions markerOptions= new MarkerOptions()
+                .position(latLng)
+                .title("estoy aqui");
 
 
-            }
-
-            @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
-
-            }
-
-            @Override
-            public void onProviderEnabled(@NonNull String provider) {
-
-            }
-
-            @Override
-            public void onProviderDisabled(@NonNull String provider) {
-
-            }
-
-        };
-        int permiso = ContextCompat.checkSelfPermission(MapsActivity.this,Manifest.permission.ACCESS_COARSE_LOCATION);
-        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, locationListener);
+        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,10));
+        googleMap.addMarker(markerOptions);
 
 
+        LatLng sydney = new LatLng(11, -73.5);
+        //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
 
+        mMap.addMarker(new MarkerOptions()
+                .icon(BitmapDescriptorFactory.fromResource(R.drawable.gasolina))
+                .anchor(0.5f,1.0f)
+                //mejor 0.5 1.0
+                .position(sydney)
+                .title("gasolina")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-         /*/////////-------------(Mio)Gasolinas bases de datos------------------////////////////////
-        // Add a marker in Sydney and move the camera
-        LatLng sydney = new LatLng(11.011295180937296, -74.23872657069808);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Ubicacion Actual"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney,10));
+        );
 
         SQLiteDatabase db=conn.getReadableDatabase();
-        //Estudiante estudiante=null;
         Cursor cursor=db.rawQuery("SELECT * FROM "+Constantes.TABLA_ESTUDIANTE,null);
         while(cursor.moveToNext()){
-           LatLng lugar = new LatLng(Double.parseDouble(cursor.getString(5)), Double.parseDouble(cursor.getString(6)));
-           // LatLng lugar = new LatLng(11.3+i, 11.6+i);
-           // mMap.addMarker(new MarkerOptions().position(lugar).title(cursor.getString(1)));
-            mMap.addMarker(new MarkerOptions().position(lugar).title(cursor.getString(1)));
-           // mMap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_gasolina)).anchor(0.0f,1.0f).position(lugar).title(cursor.getString(1)));
+            LatLng lugar = new LatLng(Double.parseDouble(cursor.getString(5)), Double.parseDouble(cursor.getString(6)));
+            //mMap.addMarker(new MarkerOptions().position(lugar).title(cursor.getString(1)));
+            mMap.addMarker(new MarkerOptions()
+                    .icon(BitmapDescriptorFactory.fromResource(R.drawable.gasolina))
+                    .anchor(0.5f,1.0f)
+                    //mejor 0.5 1.0
+                    .position(lugar)
+                    .title(cursor.getString(1))
+
+            );
         }
-       //////////////////////////////////////////////////////////////////////////////// */
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case REQUEST_CODE:
+                if(grantResults.length>0 && grantResults[0]==PackageManager.PERMISSION_GRANTED){
+                    fetchLastLocation();
+                }
+                break;
+        }
     }
 
 
 }
+
+ /* SQLiteDatabase db=conn.getReadableDatabase();
+        Cursor cursor=db.rawQuery("SELECT * FROM "+Constantes.TABLA_ESTUDIANTE,null);
+        while(cursor.moveToNext()){
+            LatLng lugar = new LatLng(Double.parseDouble(cursor.getString(5)), Double.parseDouble(cursor.getString(6)));
+            // LatLng lugar = new LatLng(11.3+i, 11.6+i);
+            // mMap.addMarker(new MarkerOptions().position(lugar).title(cursor.getString(1)));
+            mMap.addMarker(new MarkerOptions().position(lugar).title(cursor.getString(1)));
+            // mMap.addMarker(new MarkerOptions().icon(BitmapDescriptorFactory.fromResource(R.mipmap.ic_gasolina)).anchor(0.0f,1.0f).position(lugar).title(cursor.getString(1)));
+        }
+
+      */

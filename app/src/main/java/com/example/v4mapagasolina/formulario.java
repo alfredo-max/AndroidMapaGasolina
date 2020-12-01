@@ -21,7 +21,7 @@ public class formulario extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_formulario);
-        CampoCodigo= (EditText) findViewById(R.id.txtcodigo);
+       // CampoCodigo= (EditText) findViewById(R.id.txtcodigo);
         CampoNombre= (EditText) findViewById(R.id.txtnombre);
         CampoEmpresa = (EditText) findViewById(R.id.textempresa);
         CampoDepartamento = (EditText) findViewById(R.id.txtdepartamento);

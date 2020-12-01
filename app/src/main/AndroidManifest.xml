@@ -7,11 +7,15 @@
          location permissions for the "MyLocation" functionality.
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <!--estos permisos los saque de otros codigos
+
+    <!-- colocados -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!--estos permisos los saque de otros codigos//
    <uses-permission android:name="android.hardware.location.gps"/>
    //<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
    <uses-permission android:name="android.permission.INTERNET" />
-    // -->
+-->
    <application
        android:allowBackup="true"
        android:icon="@mipmap/ic_launcher"
