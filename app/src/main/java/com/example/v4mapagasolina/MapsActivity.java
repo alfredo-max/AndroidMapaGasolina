@@ -39,12 +39,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        /* se quito//
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-       */
+
         conn= new ConexionSQLiteHelper(this,"bd_estudiantes",null ,1);
 
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(this);
@@ -101,24 +96,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         MarkerOptions markerOptions= new MarkerOptions()
                 .position(latLng)
-                .title("estoy aqui");
+                .title("Ubicacion Actual");
 
 
         googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng,10));
         googleMap.addMarker(markerOptions);
 
-
-        LatLng sydney = new LatLng(11, -73.5);
-        //mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
-
-        mMap.addMarker(new MarkerOptions()
-                .icon(BitmapDescriptorFactory.fromResource(R.drawable.gasolina))
-                .anchor(0.5f,1.0f)
-                //mejor 0.5 1.0
-                .position(sydney)
-                .title("gasolina")
-
-        );
 
         SQLiteDatabase db=conn.getReadableDatabase();
         Cursor cursor=db.rawQuery("SELECT * FROM "+Constantes.TABLA_ESTUDIANTE,null);
@@ -131,6 +114,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     //mejor 0.5 1.0
                     .position(lugar)
                     .title(cursor.getString(1))
+                    .snippet(cursor.getString(2)+","+cursor.getString(3))
+                    .flat(true)
 
             );
         }
